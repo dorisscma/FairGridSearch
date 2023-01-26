@@ -16,7 +16,7 @@ Base Estimators:
 - [x] Gaussian Naive Bayes
 - [ ] TabTransformer
 
-Bias Mitigation: 
+Bias Mitigation: \
 Pre-processing <br />
 - [x] Reweighing
 - [x] Learning Fair Representation
