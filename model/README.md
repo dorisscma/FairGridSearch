@@ -19,7 +19,7 @@ Base Estimators:
 Bias Mitigation: \
 Pre-processing
 - [x] Reweighing
-- [x] Learning Fair Representation
+- [x] Learning Fair Representation \
 In-processing
 - [x] Adversarial Debiasing
 - [x] Exponentiated Gradient Reduction \
