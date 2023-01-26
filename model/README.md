@@ -2,13 +2,13 @@ fairness_tradeoff.model
 
 To do: 
 
-- [ ] Datasets:
+1. Datasets:
     - [x] COMPAS
     - [ ] ADULTS
     - [ ] LAW
     - [ ] HMDA
 
-- [ ] Base Estimators:
+2. Base Estimators:
     - [x] Logistics Regression
     - [x] Random Forest
     - [x] Gradient Boosting
