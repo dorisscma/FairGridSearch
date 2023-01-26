@@ -20,9 +20,11 @@ Bias Mitigation:
 Pre-processing <br />
 - [x] Reweighing
 - [x] Learning Fair Representation
+
 In-processing <br />
 - [x] Adversarial Debiasing
 - [x] Exponentiated Gradient Reduction
+
 Post-processing <br />
 - [x] Reject Option Classifier
 - [x] Calibrated Equalized Odds
