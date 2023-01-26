@@ -2,7 +2,7 @@ fairness_tradeoff.model
 
 To do: 
 
-- [] Datasets:
+- [ ] Datasets:
   - [x] COMPAS
   - [ ] ADULTS
   - [ ] LAW
