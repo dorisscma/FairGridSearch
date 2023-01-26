@@ -17,13 +17,15 @@ Base Estimators:
 - [ ] TabTransformer
 
 Bias Mitigation: \
-Pre-processing
+**Pre-processing**
 - [x] Reweighing
-- [x] Learning Fair Representation \
-In-processing
+- [x] Learning Fair Representation
+
+**In-processing**
 - [x] Adversarial Debiasing
-- [x] Exponentiated Gradient Reduction \
-Post-processing 
+- [x] Exponentiated Gradient Reduction
+
+**Post-processing**
 - [x] Reject Option Classifier
 - [x] Calibrated Equalized Odds
 
