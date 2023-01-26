@@ -8,18 +8,18 @@ To do:
   - [ ] LAW
   - [ ] HMDA
 
-Base Estimators:
-- [x] Logistics Regression
-- [x] Random Forest
-- [x] Gradient Boosting
-- [x] Support Vector Machine
-- [x] Gaussian Naive Bayes
-- [ ] TabTransformer
+- [ ] Base Estimators:
+  - [x] Logistics Regression
+  - [x] Random Forest
+  - [x] Gradient Boosting
+  - [x] Support Vector Machine
+  - [x] Gaussian Naive Bayes
+  - [ ] TabTransformer
 
-Bias Mitigation: \
-**Pre-processing**
-- [x] Reweighing
-- [x] Learning Fair Representation
+- [ ] Bias Mitigation:
+  - [ ] **Pre-processing**
+    - [x] Reweighing
+    - [x] Learning Fair Representation
 
 **In-processing**
 - [x] Adversarial Debiasing
