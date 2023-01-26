@@ -2,11 +2,11 @@ fairness_tradeoff.model
 
 To do: 
 
-[ ]Datasets:
-- [x] COMPAS
-- [ ] ADULTS
-- [ ] LAW
-- [ ] HMDA
+- [ ]Datasets:
+  - [x] COMPAS
+  - [ ] ADULTS
+  - [ ] LAW
+  - [ ] HMDA
 
 Base Estimators:
 - [x] Logistics Regression
