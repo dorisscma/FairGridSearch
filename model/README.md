@@ -20,7 +20,7 @@ Bias Mitigation: \
 Pre-processing \
 - [x] Reweighing
 - [x] Learning Fair Representation
-In-processing \
+In-processing__
 - [x] Adversarial Debiasing
 - [x] Exponentiated Gradient Reduction
 Post-processing \
