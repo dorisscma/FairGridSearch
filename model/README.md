@@ -21,14 +21,14 @@ To do:
     - [x] Reweighing
     - [x] Learning Fair Representation
 
-**In-processing**
-- [x] Adversarial Debiasing
-- [x] Exponentiated Gradient Reduction
+  - [ ] **In-processing**
+    - [x] Adversarial Debiasing
+    - [x] Exponentiated Gradient Reduction
 
-**Post-processing**
-- [x] Reject Option Classifier
-- [x] Calibrated Equalized Odds
+  - [ ] **Post-processing**
+    - [x] Reject Option Classifier
+    - [x] Calibrated Equalized Odds
 
-Code check:
-- LFR-in same for all base estimators
-- EGR random prediction as stated in LearnFair (https://github.com/fairlearn/fairlearn/blob/main/fairlearn/reductions/_exponentiated_gradient/exponentiated_gradient.py)?
+- [ ] Code check:
+  - LFR-in same for all base estimators
+  - EGR random prediction as stated in LearnFair (https://github.com/fairlearn/fairlearn/blob/main/fairlearn/reductions/_exponentiated_gradient/exponentiated_gradient.py)?
