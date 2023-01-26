@@ -2,22 +2,6 @@ fairness_tradeoff.model
 
 To do: 
 
-**Main Steps**
-- Load in packages and the datasets
-- Model
-    - GPT2
-        - Prepare the dataset and build ``TextDataset``
-        - Load the pre-trained GPT-2 model and tokenizer
-        - Start fine-tuning with ``Trainer``
-        - Generate text
-    - RNN
-        - Load in previously built ``TextDataset``
-        - Construct the simple RNN structure
-        - Generate text
-- Evaluate the model
-    - BLEU
-    - Grammar Check
-    - 
 1. Datasets:
     - [x] COMPAS
     - [ ] ADULTS
