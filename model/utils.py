@@ -71,11 +71,6 @@ from aif360.sklearn.inprocessing import AdversarialDebiasing, ExponentiatedGradi
 from aif360.sklearn.postprocessing import CalibratedEqualizedOdds, RejectOptionClassifier
 
 
-# Set plot font
-plt.rcParams.update({'font.family':'serif'})
-plt.rcParams.update({'font.serif':'Times New Roman'})
-
-
 import math
 import numpy as np
 import pandas as pd
