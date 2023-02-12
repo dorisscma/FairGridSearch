@@ -132,7 +132,7 @@ bm_category = {'PRE':['RW', 'LFR_pre'],
                'IN': ['LFR_in','AD','EGR'],
                'POST':['ROC','CEO']}
 
-def store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, threshold, priv_group, pos_label):
+def store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, threshold, priv_group, pos_label, prot_attr):
     """Returns a dictionary with all interested accuracy and fairness metrics.
         Args:
             y_test (array-like): true labels from test set.
@@ -151,15 +151,15 @@ def store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, thresh
     thres_dict[BM_name][threshold]['mcc_score'] += [matthews_corrcoef(y_test, y_pred)]
     thres_dict[BM_name][threshold]['norm_mcc_score'] += [0.5*(matthews_corrcoef(y_test, y_pred)+1)]
     # ------------------------------------- Group Fairness Metrics ------------------------------------
-    thres_dict[BM_name][threshold]['spd_score'] += [statistical_parity_difference(y_test, y_pred, prot_attr='race',
+    thres_dict[BM_name][threshold]['spd_score'] += [statistical_parity_difference(y_test, y_pred, prot_attr=prot_attr,
                                                                                   priv_group=priv_group, pos_label=pos_label)]
-    thres_dict[BM_name][threshold]['aod_score'] += [average_odds_difference(y_test, y_pred, prot_attr='race',
+    thres_dict[BM_name][threshold]['aod_score'] += [average_odds_difference(y_test, y_pred, prot_attr=prot_attr,
                                                                             priv_group=priv_group, pos_label=pos_label)]
-    thres_dict[BM_name][threshold]['eod_score'] += [equal_opportunity_difference(y_test, y_pred, prot_attr='race',
+    thres_dict[BM_name][threshold]['eod_score'] += [equal_opportunity_difference(y_test, y_pred, prot_attr=prot_attr,
                                                                                  priv_group=priv_group, pos_label=pos_label)]
     thres_dict[BM_name][threshold]['ford_score'] += [aif_difference(false_omission_rate_error, y_test, y_pred,
-                                                                    prot_attr='race', priv_group=priv_group, pos_label=pos_label)]
-    thres_dict[BM_name][threshold]['ppvd_score'] += [aif_difference(precision_score, y_test, y_pred, prot_attr='race',
+                                                                    prot_attr=prot_attr, priv_group=priv_group, pos_label=pos_label)]
+    thres_dict[BM_name][threshold]['ppvd_score'] += [aif_difference(precision_score, y_test, y_pred, prot_attr=prot_attr,
                                                                     priv_group=priv_group, pos_label=pos_label)]
     # ---------------------------------- Individual Fairness Metrics ----------------------------------
     try: thres_dict[BM_name][threshold]['(1-consistency_score)'] += [1-consistency_score(X_test, y_pred)]
