@@ -113,7 +113,8 @@ class skf_model():
     stratified k-fold model class, to implement the grid-search framework 
     with k-fold to ensure performance stability.
     """
-    def __init__(self, pos_label, priv_group, cv, random_state, n_jobs):
+    def __init__(self, prot_attr, pos_label, priv_group, cv, random_state, n_jobs):
+        self.prot_attr = prot_attr
         self.pos_label = pos_label
         self.priv_group = priv_group
         self.cv = cv
@@ -186,12 +187,12 @@ class skf_model():
         BM_dict = {None: base_estimator, 
                    # pre-processing
                    # 'RW': ReweighingMeta(estimator=base_estimator), 
-                   'RW': Reweighing(prot_attr='race'), 
-                   'LFR_pre': LearnedFairRepresentations(prot_attr='race', random_state=self.random_state),
+                   'RW': Reweighing(prot_attr=self.prot_attr), 
+                   'LFR_pre': LearnedFairRepresentations(prot_attr=self.prot_attr, random_state=self.random_state),
                    # in-processing
-                   'LFR_in': LearnedFairRepresentations(prot_attr='race', random_state=self.random_state),
-                   'AD': AdversarialDebiasing(prot_attr='race', random_state=self.random_state),
-                   'EGR': ExponentiatedGradientReduction(prot_attr='race', estimator=base_estimator,
+                   'LFR_in': LearnedFairRepresentations(prot_attr=self.prot_attr, random_state=self.random_state),
+                   'AD': AdversarialDebiasing(prot_attr=self.prot_attr, random_state=self.random_state),
+                   'EGR': ExponentiatedGradientReduction(prot_attr=self.prot_attr, estimator=base_estimator,
                                                          constraints="EqualizedOdds"),
                    # post-processing
                    'ROC': base_estimator,
@@ -282,21 +283,21 @@ class skf_model():
                     
                     if BM not in bm_category['POST']:
                         thres_dict = store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, threshold,
-                                                   self.priv_group, self.pos_label)
+                                                   self.priv_group, self.pos_label, self.prot_attr)
                     else: # Post-Processing
                         if BM=='ROC':
                             # fit the primary prediction to post-processing models  
-                            post_model = RejectOptionClassifier(prot_attr='race',threshold=threshold)
+                            post_model = RejectOptionClassifier(prot_attr=self.prot_attr,threshold=threshold)
                             post_model.fit(pred_prob_all,y_test,pos_label=self.pos_label,priv_group=self.priv_group)
                         elif BM=='CEO':
-                            post_model = CalibratedEqualizedOdds(prot_attr='race',random_state=self.random_state)
+                            post_model = CalibratedEqualizedOdds(prot_attr=self.prot_attr,random_state=self.random_state)
                             post_model.fit(pred_prob_all,y_test,pos_label=self.pos_label)                            
                         # get final prediction
                         initial_pred = pd.DataFrame(pred_prob_all, index=X_test.index)
                         final_pred_prob = post_model.predict_proba(initial_pred)[:,1]
                         final_y_pred = (final_pred_prob >= threshold).astype('int') # set threshold
                         thres_dict = store_metrics(y_test, final_y_pred, X_test, final_pred_prob, thres_dict, BM_name,
-                                                   threshold, self.priv_group, self.pos_label)
+                                                   threshold, self.priv_group, self.pos_label, self.prot_attr)
         return thres_dict
         
     # @methods
@@ -329,12 +330,13 @@ class skf_model():
 
     
 class fair_GridsearchCV():
-    def __init__(self, base, param_grid, pos_label, priv_group, cv=10, random_state=1234, n_jobs=multiprocessing.cpu_count()-1):
+    def __init__(self, base, param_grid, pos_label, priv_group, prot_attr='race', cv=10, random_state=1234, n_jobs=multiprocessing.cpu_count()-1):
         """
         base (string): base estimator, e.g. "LR", "RF", "GB", "SVM", "NB", "TabTr"
         """
         self.base = base
         self.param_grid = param_grid
+        self.prot_attr = prot_attr
         self.pos_label = pos_label
         self.priv_group = priv_group
         self.cv = cv
@@ -391,7 +393,7 @@ class fair_GridsearchCV():
             all_metrics = {}
             for i, param in enumerate(tqdm(hyperp_grid)):
                 print(param)
-                model = skf_model(self.pos_label, self.priv_group, self.cv, self.random_state, self.n_jobs)
+                model = skf_model(self.prot_attr, self.pos_label, self.priv_group, self.cv, self.random_state, self.n_jobs)
                 metrics = model.get_metrics(X=X, y=y, base=self.base, param=param, 
                                             BM_arr=self.param_grid['Bias_Mitigation'], thres_arr=self.param_grid['threshold'])
                 for j, BM in enumerate(metrics.keys()):
