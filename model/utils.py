@@ -158,7 +158,8 @@ def store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, thresh
     thres_dict[BM_name][threshold]['eod_score'] += [equal_opportunity_difference(y_test, y_pred, prot_attr=prot_attr,
                                                                                  priv_group=priv_group, pos_label=pos_label)]
     thres_dict[BM_name][threshold]['ford_score'] += [aif_difference(false_omission_rate_error, y_test, y_pred,
-                                                                    prot_attr=prot_attr, priv_group=priv_group, pos_label=pos_label)]
+                                                                    prot_attr=prot_attr, priv_group=priv_group, 
+                                                                    pos_label=pos_label)]
     thres_dict[BM_name][threshold]['ppvd_score'] += [aif_difference(precision_score, y_test, y_pred, prot_attr=prot_attr,
                                                                     priv_group=priv_group, pos_label=pos_label)]
     # ---------------------------------- Individual Fairness Metrics ----------------------------------
