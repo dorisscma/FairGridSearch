@@ -128,7 +128,8 @@ class skf_model():
             y_train , y_test = y[train_index] , y[test_index]
             train_data,test_data,NUMERIC_FEATURES,CATEGORICAL_FEATURES = get_num_cat_col(X_train,X_test,y_train,y_test)
             train, val, train_dataset, val_dataset, test_dataset = tf_dataset_for_TrainValTest(train_data, test_data,
-                                                                                               CATEGORICAL_FEATURES, NUMERIC_FEATURES)
+                                                                                               CATEGORICAL_FEATURES, 
+                                                                                               NUMERIC_FEATURES)
             category_prep_layers = build_categorical_prep(train, CATEGORICAL_FEATURES)
         else:
             categorical_cols = list(X.select_dtypes(exclude=[np.number]).columns)
@@ -202,9 +203,10 @@ class skf_model():
             if (base=='TabTrans')&((BM=='LFR_pre')|(BM=='EGR')): pass
             else:
                 BM_name = str(BM)
-                model = BM_dict[BM]
+                BMs = BM.split('+') if BM!=None else [None]
+                model = BM_dict[BMs[0]]
                 # fit
-                if BM=='RW':
+                if 'RW' in BMs:
                     # model.fit(X_train, y_train)
                     sample_weight = None 
                     if base!='TabTrans': 
@@ -235,29 +237,10 @@ class skf_model():
                         model.fit(X_train, y_train, priv_group=self.priv_group)
                         base_estimator.fit(model.transform(X_train), y_train)
                     else: pass # categorical feature conflict: LFR_pre requires num_var, TabTrans requires at least one cat_var
-                    #     # first fit_transform training and validating data with LFR
-                    #     train_idx, val_idx = train.index, val.index
-                    #     tmp_data = pd.concat([train, val])
-                    #     tmp_data = pd.get_dummies(tmp_data, columns = CATEGORICAL_FEATURES) # because LFR requires all numeric
-                    #     model.fit(tmp_data.drop(LABEL, axis=1), tmp_data[LABEL], priv_group=self.priv_group)
-                    #     tmp_data = model.transform(tmp_data.drop(LABEL, axis=1))
-                    #     train, val = pd.concat([tmp_data.loc[train_idx], train.loc[train_idx,LABEL]], axis=1),\
-                    #                  pd.concat([tmp_data.loc[val_idx], val.loc[val_idx,LABEL]], axis=1)
-                    #     # then convert them to tf_datasets
-                    #     train_dataset = df_to_dataset(train, target=LABEL)
-                    #     val_dataset = df_to_dataset(val, target=LABEL, shuffle=False)
-                    #     print('dataset')
-                    #     # we don't need category layers anymore
-                    #     TabTrans_param.update({'categorical_features': None, 'categorical_lookup': None})
-                    #     base_estimator = TabTransformer(**TabTrans_param)
-                    #     base_estimator.fit(train_dataset, epochs=NUM_EPOCHS, 
-                    #                   validation_data=val_dataset, callbacks=callback_list)
-                    # print('done fitting LFR_LR')
                     model = base_estimator # but now the base estimator is fit on lfr transformed training data
                 elif BM=='LFR_in': model.fit(X_train,y_train,priv_group=self.priv_group)
                 else: 
                     if BM in bm_category['IN']: 
-                        # tf.disable_eager_execution() # AdversarialDebiasing does not work in eager execution mode
                         model.fit(X_train, y_train)
                     elif base!='TabTrans': model.fit(X_train, y_train)
                     else: 
@@ -281,15 +264,15 @@ class skf_model():
                     # unique, counts = np.unique(y_pred, return_counts=True)
                     # print(np.asarray((unique, counts)).T)
                     
-                    if BM not in bm_category['POST']:
+                    if len(set.intersection(set(BMs),set(bm_category['POST']))) == 0: # if none of the POST BM is included
                         thres_dict = store_metrics(y_test, y_pred, X_test, pred_prob, thres_dict, BM_name, threshold,
                                                    self.priv_group, self.pos_label, self.prot_attr)
                     else: # Post-Processing
-                        if BM=='ROC':
+                        if 'ROC' in BMs:
                             # fit the primary prediction to post-processing models  
                             post_model = RejectOptionClassifier(prot_attr=self.prot_attr,threshold=threshold)
                             post_model.fit(pred_prob_all,y_test,pos_label=self.pos_label,priv_group=self.priv_group)
-                        elif BM=='CEO':
+                        elif 'CEO' in BMs:
                             post_model = CalibratedEqualizedOdds(prot_attr=self.prot_attr,random_state=self.random_state)
                             post_model.fit(pred_prob_all,y_test,pos_label=self.pos_label)                            
                         # get final prediction
@@ -330,7 +313,8 @@ class skf_model():
 
     
 class fair_GridsearchCV():
-    def __init__(self, base, param_grid, pos_label, priv_group, prot_attr='race', cv=10, random_state=1234, n_jobs=multiprocessing.cpu_count()-1):
+    def __init__(self, base, param_grid, pos_label, priv_group, prot_attr='race', cv=10, random_state=1234, 
+                 n_jobs=multiprocessing.cpu_count()-1):
         """
         base (string): base estimator, e.g. "LR", "RF", "GB", "SVM", "NB", "TabTr"
         """
