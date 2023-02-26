@@ -218,7 +218,7 @@ def get_output_table(all_metrics, base, scoring):
     w_acc = scoring[2]
     w_fair = scoring[3]
     acc_cost = 1-output_table[acc_metric]
-    fair_cost = output_table[fair_metric]
+    fair_cost = abs(output_table[fair_metric])
 
     output_table['cost'] = w_acc*acc_cost + w_fair*fair_cost
     return output_table

@@ -200,6 +200,7 @@ class skf_model():
                    'CEO': base_estimator} 
 
         for BM in BM_arr:
+            print('running Bias Mitigation {}'.format(BM))
             if (base=='TabTrans')&((BM=='LFR_pre')|(BM=='EGR')): pass
             else:
                 BM_name = str(BM)
@@ -269,7 +270,8 @@ class skf_model():
                                                    self.priv_group, self.pos_label, self.prot_attr)
                     else: # Post-Processing
                         if 'ROC' in BMs:
-                            # fit the primary prediction to post-processing models  
+                            # fit the primary prediction to post-processing models 
+                            print(y_test.index.to_frame().race.value_counts())
                             post_model = RejectOptionClassifier(prot_attr=self.prot_attr,threshold=threshold)
                             post_model.fit(pred_prob_all,y_test,pos_label=self.pos_label,priv_group=self.priv_group)
                         elif 'CEO' in BMs:
