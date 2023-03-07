@@ -43,27 +43,32 @@ def behaviour_analysis(data, metric_list, category='metric'):
                 diff_degree[base][scale] = 0
                 
     # analyze changes
-    for metric in metric_list:
-        for base in data.base_estimator.unique():
-            default_list = data[(data.base_estimator==base)&(data.Bias_Mitigation=='None')].reset_index(drop=True)[metric]
-            default_mean = default_list.mean()
-            for BM in data[data.base_estimator==base].Bias_Mitigation.unique():
-                if BM == 'None': pass
-                else: 
-                    bm_list = data[(data.base_estimator==base)&(data.Bias_Mitigation==BM)].reset_index(drop=True)[metric]
-                    bm_mean = bm_list.mean()
-                    rise_ratio = bm_mean - default_mean
-                    cohenn = cohen_d(default_list, bm_list)
-                    # store values according to category                    
-                    category = metric if the_category == 'metric' else (BM if the_category == 'bm' else base)
-                    if mann(default_list, bm_list) >= 0.05 or rise_ratio >= 0:
-                        diff_degree[category]['noorincrease'] += 1
-                    elif cohenn < 0.5:
-                        diff_degree[category]['small'] += 1
-                    elif cohenn >= 0.5 and cohenn < 0.8:
-                        diff_degree[category]['medium'] += 1
-                    elif cohenn >= 0.8:
-                        diff_degree[category]['large'] += 1
+    for dataset in data.dataset.unique():
+            for metric in metric_list:
+                for base in data.base_estimator.unique():
+                    default_list = data[(data.dataset==dataset)&\
+                                        (data.base_estimator==base)&\
+                                        (data.Bias_Mitigation=='None')].reset_index(drop=True)[metric]
+                    default_mean = default_list.mean()
+                    for BM in data[data.base_estimator==base].Bias_Mitigation.unique():
+                        if BM == 'None': pass
+                        else: 
+                            bm_list = data[(data.dataset==dataset)&\
+                                           (data.base_estimator==base)&\
+                                           (data.Bias_Mitigation==BM)].reset_index(drop=True)[metric]
+                            bm_mean = bm_list.mean()
+                            rise_ratio = bm_mean - default_mean
+                            cohenn = cohen_d(default_list, bm_list)
+                            # store values according to category                    
+                            category = metric if the_category == 'metric' else (BM if the_category == 'bm' else base)
+                            if mann(default_list, bm_list) >= 0.05 or rise_ratio >= 0:
+                                diff_degree[category]['noorincrease'] += 1
+                            elif cohenn < 0.5:
+                                diff_degree[category]['small'] += 1
+                            elif cohenn >= 0.5 and cohenn < 0.8:
+                                diff_degree[category]['medium'] += 1
+                            elif cohenn >= 0.8:
+                                diff_degree[category]['large'] += 1
     table = pd.DataFrame(diff_degree)
     table = table.apply(lambda x: x/x.sum())
     table.columns = [col.removeprefix('abs_').removeprefix('avg_').removesuffix('_score').upper() for col in table.columns]
