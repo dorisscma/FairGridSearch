@@ -10,7 +10,9 @@ def behaviour_analysis(data, metric_list, category='metric'):
         metric_list (list): list of metrics to anaylze on, e.g. accuracy/fairness metrics
         category (str): if not "metric", the analysis is run w.r.t. this category, e.g. "BM","base"
     Function that runs the analysis Chen et al. included in their work (fig. 3-6)
-    ref: 
+    ref: Chen, Z., Zhang, J. M., Sarro, F., and Harman, M. (2023). 
+         "A Comprehensive Empirical Study of Bias Mitigation Methods for Machine Learning Classifiers."
+         (https://github.com/chenzhenpeng18/TOSEM23-BiasMitigationStudy/tree/main/Analysis_code)
     """
     from numpy import mean, std, sqrt
     import scipy.stats as stats
@@ -43,19 +45,29 @@ def behaviour_analysis(data, metric_list, category='metric'):
                 diff_degree[base][scale] = 0
                 
     # analyze changes
+    if 'dataset' not in data.columns:
+        data.insert(0,'dataset','dataset') # work around for analysing all datasets combined 
     for dataset in data.dataset.unique():
             for metric in metric_list:
                 for base in data.base_estimator.unique():
-                    default_list = data[(data.dataset==dataset)&\
+                    default = data[(data.dataset==dataset)&\
                                         (data.base_estimator==base)&\
-                                        (data.Bias_Mitigation=='None')].reset_index(drop=True)[metric]
+                                        (data.Bias_Mitigation=='None')]
+                    default = default.sort_values(by=['threshold','param']).reset_index(drop=True)
+                    default_list = default[metric]
                     default_mean = default_list.mean()
                     for BM in data[data.base_estimator==base].Bias_Mitigation.unique():
                         if BM == 'None': pass
                         else: 
-                            bm_list = data[(data.dataset==dataset)&\
+                            bm = data[(data.dataset==dataset)&\
                                            (data.base_estimator==base)&\
-                                           (data.Bias_Mitigation==BM)].reset_index(drop=True)[metric]
+                                           (data.Bias_Mitigation==BM)]
+                            bm = bm.sort_values(by=['threshold','param']).reset_index(drop=True)
+                            bm_list = bm[metric]
+                            if (default.iloc[:, [0,1,2,4]] != bm.iloc[:, [0,1,2,4]]).any().any():
+                                if (BM in ['AD','LFR_in'])&((default.iloc[:, [0,1,4]]==bm.iloc[:, [0,1,4]]).all().all()): pass
+                                else: 
+                                    print(dataset, base, BM)
                             bm_mean = bm_list.mean()
                             rise_ratio = bm_mean - default_mean
                             cohenn = cohen_d(default_list, bm_list)
@@ -69,7 +81,35 @@ def behaviour_analysis(data, metric_list, category='metric'):
                                 diff_degree[category]['medium'] += 1
                             elif cohenn >= 0.8:
                                 diff_degree[category]['large'] += 1
-    table = pd.DataFrame(diff_degree)
+    # table = pd.DataFrame(diff_degree)
+    # table = table.apply(lambda x: x/x.sum())
+    # table.columns = [col.removeprefix('abs_').removeprefix('avg_').removesuffix('_score').upper() for col in table.columns]
+    # # shorten "1-consistency" name
+    # table = table.rename({'(1-CONSISTENCY_SCORE)': '1-CNS'}, axis=1)
+    # # re-order columns
+    # if 'LR' in table.columns:
+    #     table = table[['LR','RF','GB','SVM','NB','TABTRANS']]
+    # elif 'RW' in table.columns:
+    #     table = table[['RW','LFR_PRE','LFR_IN','AD','EGR','ROC','CEO','RW+ROC','RW+CEO']]
+
+    return diff_degree    
+
+def plot_behaviour_analysis(diff_degree, data_name, category='metrics', caption='', figsize=(8, 6)):
+    # plot tutorial: https://sharkcoder.com/data-visualization/mpl-stacked-bars
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import seaborn as sns
+    sns.set()
+    import re
+    
+    if data_name != 'All':    # construct table for single datasets
+        table = pd.DataFrame(diff_degree)
+        # --------------------- save original table ---------------------
+        filename = caption.split()[0]+'_'+category
+        table.to_pickle('./Result_Diff_Degree/'+data_name+'_'+filename)
+        # --------------------------------------------------------------- 
+    else: table = diff_degree.copy()
+    
     table = table.apply(lambda x: x/x.sum())
     table.columns = [col.removeprefix('abs_').removeprefix('avg_').removesuffix('_score').upper() for col in table.columns]
     # shorten "1-consistency" name
@@ -80,16 +120,8 @@ def behaviour_analysis(data, metric_list, category='metric'):
     elif 'RW' in table.columns:
         table = table[['RW','LFR_PRE','LFR_IN','AD','EGR','ROC','CEO','RW+ROC','RW+CEO']]
 
-    return diff_degree, table
-
-
-def plot_behaviour_analysis(table, caption='', figsize=(8, 6)):
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-    import seaborn as sns
-    sns.set()
-    import re
-    # %matplotlib inline
+    # table.index = ['Increase or no significance', 'Decrease (small)', 'Decrease (medium)', 'Decrease (large)']
+    table.index = ['N or (+)',  '(-) Small', '(-) Medium', '(-) Large']
 
     font_color = '#525252'
     # csfont = {'fontname':'Georgia'} # title font
@@ -103,8 +135,8 @@ def plot_behaviour_analysis(table, caption='', figsize=(8, 6)):
     plt.tight_layout()
 
     # 2. Create the title        
-    title = plt.title(caption, pad=60, fontsize=18, color=font_color)
-    title.set_position([.5, 1.02])
+    title = plt.title(caption.format(data_name.replace('_',' ')), pad=60, fontsize=11, color=font_color, y=0.5)
+    title.set_position([.5, 0.95])
     # Adjust the subplot so that the title would fit
     plt.subplots_adjust(top=0.8, left=0.26)
 
@@ -113,9 +145,14 @@ def plot_behaviour_analysis(table, caption='', figsize=(8, 6)):
         label.set_fontsize(10)
     plt.xticks(rotation=0, color=font_color)
     plt.yticks(color=font_color)
+    plt.ylabel('Proportions of Scenarios')
 
     # 4. Add legend    
-    legend = plt.legend(loc='center',
+    legend = plt.legend(
+           loc='center',
+           handletextpad=0.3,
+           handlelength=1.2,
+           handleheight=1.2,
            frameon=False,
            bbox_to_anchor=(0., 1.02, 1., .102), 
            mode='expand', 
@@ -138,3 +175,6 @@ def plot_behaviour_analysis(table, caption='', figsize=(8, 6)):
                     color='black',
                     # weight='bold',
                     fontsize=8)
+    # save plot
+    filename = caption.split()[0]+'_'+category
+    plt.savefig('./Result_Plots/'+data_name+'_'+filename+'.png', bbox_inches='tight')
