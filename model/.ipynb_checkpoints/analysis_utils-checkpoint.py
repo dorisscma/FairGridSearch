@@ -1,6 +1,10 @@
 # helper file that collects functions used for analysis for the FairGridSearch results
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import seaborn as sns
+import re
 
 def behaviour_analysis(data, metric_list, category='metric'):
     """
@@ -178,3 +182,112 @@ def plot_behaviour_analysis(diff_degree, data_name, category='metrics', caption=
     # save plot
     filename = caption.split()[0]+'_'+category
     plt.savefig('./Result_Plots/'+data_name+'_'+filename+'.png', bbox_inches='tight')
+    
+
+def get_df_metric_diff(data, metric_list):
+    if 'dataset' not in data.columns:
+        data.insert(0,'dataset','dataset') # work around for analysing all datasets combined 
+
+    df_metric_diff = pd.DataFrame()
+    for dataset in data.dataset.unique():
+        df_base_BM = pd.DataFrame(columns=['dataset','base_estimator','Bias_Mitigation'])
+        for base in data.base_estimator.unique():
+            df_base = pd.DataFrame(columns=['dataset','base_estimator','Bias_Mitigation'])
+            for metric in metric_list:
+                default = data[(data.dataset==dataset)&\
+                                    (data.base_estimator==base)&\
+                                    (data.Bias_Mitigation=='None')]
+                default = default.sort_values(by=['threshold','param']).reset_index(drop=True)
+                default_list = default[metric]
+                df_base_BM = pd.DataFrame()
+                for BM in data[data.base_estimator==base].Bias_Mitigation.unique():
+                    if BM == 'None': pass
+                    else: 
+                        bm = data[(data.dataset==dataset)&\
+                                       (data.base_estimator==base)&\
+                                       (data.Bias_Mitigation==BM)]
+                        bm = bm.sort_values(by=['threshold','param']).reset_index(drop=True)
+                        bm_list = bm[metric]
+                        # print(bm_list)
+                        if (default.iloc[:, [0,1,2,4]] != bm.iloc[:, [0,1,2,4]]).any().any():
+                            if (BM in ['AD','LFR_in'])&((default.iloc[:, [0,1,4]]==bm.iloc[:, [0,1,4]]).all().all()): pass
+                            else: 
+                                print(dataset, base, BM)
+                        change = bm_list-default_list
+                        # print(dataset, base, BM, metric, change)
+                        subset = pd.DataFrame(data={'dataset': dataset, 'base_estimator': base,
+                                                    'Bias_Mitigation': BM}, index=range(len(change)))
+
+                        subset[metric] = change
+                        df_base_BM = pd.concat([df_base_BM, subset])
+                        # display(subset)
+                # display(df_base_BM)
+                if df_base_BM.columns[-1]=='ACC': 
+                    df_base = df_base_BM.copy()
+                    standard_order = df_base_BM.iloc[:,:-1]
+                else: 
+                    if (df_base_BM.iloc[:,:-1].values==standard_order.values).all(): 
+                        df_base[metric] = df_base_BM[metric]
+                    else: print('Wrong order, cannot concat')
+
+        df_metric_diff = pd.concat([df_metric_diff, df_base])
+    return df_metric_diff
+
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+
+def corr_heatmap_with_significance(df, annot=True, sig_levels=(0.05, 0.01, 0.001), acc=False, acc_fair=False):
+    accuracy_map = ['ACC', 'BACC', 'F1', 'AUC', 'MCC', 'NORM_MCC']
+    fairness_map = ['SPD', 'AOD', 'EOD', 'FORD', 'PPVD', '1-CNS', 'GEI', 'TI']
+    space = 0 if acc else (0.1 if acc_fair else 0.05)
+    corr_matrix = df.corr('spearman')
+    if acc_fair:
+        corr_matrix = df[accuracy_map+fairness_map].corr('spearman')
+        corr_matrix.loc[accuracy_map, fairness_map]
+    mask = np.zeros_like(corr_matrix, dtype=bool)
+    mask[np.triu_indices_from(mask)] = True
+    with sns.axes_style("dark"):
+        ax = sns.heatmap(corr_matrix, mask=mask, annot=annot, annot_kws={'fontsize': 10},
+                         cmap='vlag', vmin=-1, vmax=1, fmt=".2f", center=0, square=True)
+        for i in range(corr_matrix.shape[0]):
+            for j in range(i+1, corr_matrix.shape[1]):
+                p = stats.spearmanr(df.iloc[:, i], df.iloc[:, j])[1]
+                sig_stars = ''
+                for idx, level in enumerate(sig_levels):
+                    if p <= level:
+                        sig_stars += '*'
+                if sig_stars:
+                    ax.text(i+0.5, j+0.78+space, '{}'.format(sig_stars), ha='center', va='center', fontsize=12)
+                    # ax.text(j+0.5, i+0.9+space, '{}'.format(sig_stars), ha='center', va='center', fontsize=12)
+                else: pass
+        if acc: ax.set_xticklabels(ax.get_xticklabels(), horizontalalignment='right')
+        else: ax.set_yticklabels(ax.get_yticklabels(), rotation=0, horizontalalignment='right')
+    return ax
+
+def corr_heatmap_with_significance_acc_fair(df, annot=True, sig_levels=(0.05, 0.01, 0.001)):
+    accuracy_map = ['ACC', 'BACC', 'F1', 'AUC', 'MCC', 'NORM_MCC']
+    fairness_map = ['SPD', 'AOD', 'EOD', 'FORD', 'PPVD', '1-CNS', 'GEI', 'TI']
+    corr_matrix = df.corr('spearman')
+    corr_matrix = corr_matrix.loc[fairness_map, accuracy_map]
+    with sns.axes_style("dark"):
+        ax = sns.heatmap(corr_matrix, annot=annot, annot_kws={'fontsize': 10},
+                         cmap='vlag', vmin=-1, vmax=1, fmt=".2f", center=0, square=True)
+        for i in range(corr_matrix.shape[0]):
+            for j in range(corr_matrix.shape[1]):
+                df_pvalue = pd.DataFrame(stats.spearmanr(df[accuracy_map+fairness_map]).pvalue,
+                                         columns=accuracy_map+fairness_map, index=accuracy_map+fairness_map, )\
+                                        .loc[fairness_map,accuracy_map]
+                p = df_pvalue.iloc[i,j]
+                # print(p)
+                sig_stars = ''
+                for idx, level in enumerate(sig_levels):
+                    if p <= level:
+                        sig_stars += '*'
+                if sig_stars:
+                    ax.text(j+0.5, i+0.9, '{}'.format(sig_stars), ha='center', va='center', fontsize=12)
+                    # ax.text(j+0.5, i+0.9+space, '{}'.format(sig_stars), ha='center', va='center', fontsize=12)
+                else: pass
+        else: ax.set_yticklabels(ax.get_yticklabels(), rotation=0, horizontalalignment='right')
+        return ax
+    
