@@ -1,5 +1,4 @@
 # FairGridSearch: A Framework to Compare Fairness-Enhancing Models
-This is the repo for the master thesis that introduces FairGridSearch for fairness-enhancing model comparison and recommendation.
 
 Machine learning (ML) models are being increasingly used in critical decision-making applications. However, these models are susceptible to replicating or even amplifying bias present in real-world data. In the relevant literature, a wide range of bias mitigation methods and base estimators exist, but selecting the optimal model for a particular dataset or application remains challenging. 
 This paper proposes a novel framework, called FairGridSearch, to compare fairness-enhancing models. The framework enables experimentation with models using various parameter combinations and subsequently recommends the best model. The study also addresses four research questions related to metrics, base estimator, classification threshold, and accuracy-fairness trade-off by applying FairGridSearch to three popular datasets Adult, COMPAS, and German Credit.
