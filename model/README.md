@@ -3,10 +3,9 @@ fairness_tradeoff.model
 To do: 
 
 1. Datasets:
+    - [x] ADULTS
     - [x] COMPAS
-    - [ ] ADULTS
-    - [ ] LAW
-    - [ ] HMDA
+    - [x] German Credit
 
 2. Base Estimators:
     - [x] Logistics Regression
@@ -14,21 +13,22 @@ To do:
     - [x] Gradient Boosting
     - [x] Support Vector Machine
     - [x] Gaussian Naive Bayes
-    - [ ] TabTransformer
+    - [x] TabTransformer
 
-- [ ] Bias Mitigation:
-    - [ ] **Pre-processing**
+- [x] Bias Mitigation:
+    - [x] **Pre-processing**
         - [x] Reweighing
         - [x] Learning Fair Representation
 
-    - [ ] **In-processing**
+    - [x] **In-processing**
+        - [x] Learning Fair Representation (in)
         - [x] Adversarial Debiasing
         - [x] Exponentiated Gradient Reduction
 
-    - [ ] **Post-processing**
+    - [x] **Post-processing**
         - [x] Reject Option Classifier
         - [x] Calibrated Equalized Odds
-
-- [ ] Code check:
-    - LFR-in same for all base estimators
-    - EGR random prediction as stated in LearnFair (https://github.com/fairlearn/fairlearn/blob/main/fairlearn/reductions/_exponentiated_gradient/exponentiated_gradient.py)?
+        
+    - [x] **Mixed Approach**
+        - [x] Reweighing+Reject Option Classifier
+        - [x] Reweighing+Calibrated Equalized Odds
